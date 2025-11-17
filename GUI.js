@@ -21,6 +21,8 @@ class NeverloseGUI {
         this.optimalScale = this.calculateOptimalScale(); 
         
         
+        this._sectionsToAdd = [];
+        
         window.__NeverloseGUI_Instance__ = this;
         
         this.initMessageSystem();
@@ -366,37 +368,57 @@ class NeverloseGUI {
         }
     }
     
-    openGUI() {
-        if (this.isOpen) return;
+openGUI() {
+    if (this.isOpen) return;
+    
+    this.createOverlay();
+    this.createGUIWindow();
+    
+    this.optimalScale = this.calculateOptimalScale();
+    this.setScale(this.optimalScale);
+    
+    setTimeout(() => {
+        this.overlay.style.display = 'block';
+        this.guiWindow.style.display = 'block';
+        
+        const guiContainer = this.guiWindow.querySelector('.nl-gui-container');
+        
+        if (this.sidebar) this.sidebar.remove();
+        if (this.mainContent) this.mainContent.remove();
+        
+        this.options.container = guiContainer;
+        this.init();
         
         
-        this.createOverlay();
-        this.createGUIWindow();
+        if (this._sectionsToAdd) {
+            this._sectionsToAdd.forEach(section => {
+                this.renderSection(section);
+            });
+        }
         
         
-        this.optimalScale = this.calculateOptimalScale();
-        this.setScale(this.optimalScale);
+        if (this._currentSection) {
+            const activeOption = this.sidebar.querySelector(`[data-section="${this._currentSection}"]`);
+            if (activeOption) {
+                activeOption.classList.add('active');
+                this.showSection(this._currentSection);
+            }
+        } else if (this.sectionsContainer.firstChild) {
+            
+            const firstSection = this.sectionsContainer.firstChild;
+            const firstSectionId = firstSection.id;
+            const firstOption = this.sidebar.querySelector(`[data-section="${firstSectionId}"]`);
+            if (firstOption) {
+                firstOption.classList.add('active');
+                firstSection.classList.remove('nl-hidden');
+                this._currentSection = firstSectionId;
+            }
+        }
         
-        
-        setTimeout(() => {
-            this.overlay.style.display = 'block';
-            this.guiWindow.style.display = 'block';
-            
-            
-            const guiContainer = this.guiWindow.querySelector('.nl-gui-container');
-            this.options.container = guiContainer;
-            
-            
-            if (this.sidebar) this.sidebar.remove();
-            if (this.mainContent) this.mainContent.remove();
-            
-            this.init();
-            
-            this.isOpen = true;
-            
-        
-        }, 10);
-    }
+        this.isOpen = true;
+    }, 10);
+}
+
     
     closeGUI() {
         if (!this.isOpen) return;
@@ -678,141 +700,142 @@ class NeverloseGUI {
     }
     
     createSidebar() {
-        this.sidebar = document.createElement('div');
-        this.sidebar.className = 'nl-sidebar';
+    if (!this.options.container) {
+        console.error('Cannot create sidebar: container is undefined');
+        return;
+    }
+    
+    this.sidebar = document.createElement('div');
+    this.sidebar.className = 'nl-sidebar';
+    
+    const logo = document.createElement('div');
+    logo.className = 'nl-logo';
+    logo.textContent = this.options.logo;
+    this.sidebar.appendChild(logo);
+    
+    this.options.categories.forEach(category => {
+        const categoryEl = document.createElement('div');
+        categoryEl.className = 'nl-category';
+        categoryEl.textContent = category.name;
+        this.sidebar.appendChild(categoryEl);
         
-        
-        const logo = document.createElement('div');
-        logo.className = 'nl-logo';
-        logo.textContent = this.options.logo;
-        this.sidebar.appendChild(logo);
-        
-        
-        this.options.categories.forEach(category => {
+        category.options.forEach(option => {
+            const optionEl = document.createElement('div');
+            optionEl.className = 'nl-sidebar-option';
+            optionEl.dataset.section = option.sectionId;
             
-            const categoryEl = document.createElement('div');
-            categoryEl.className = 'nl-category';
-            categoryEl.textContent = category.name;
-            this.sidebar.appendChild(categoryEl);
+            if (option.icon) {
+                const icon = document.createElement('span');
+                icon.className = 'nl-sidebar-icon';
+                icon.textContent = option.icon;
+                optionEl.appendChild(icon);
+            }
             
+            const text = document.createElement('span');
+            text.className = 'nl-sidebar-text';
+            text.textContent = option.name;
+            optionEl.appendChild(text);
             
-            category.options.forEach(option => {
-                const optionEl = document.createElement('div');
-                optionEl.className = 'nl-sidebar-option';
-                optionEl.dataset.section = option.sectionId;
-                
-                if (option.icon) {
-                    const icon = document.createElement('span');
-                    icon.className = 'nl-sidebar-icon';
-                    icon.textContent = option.icon;
-                    optionEl.appendChild(icon);
-                }
-                
-                const text = document.createElement('span');
-                text.className = 'nl-sidebar-text';
-                text.textContent = option.name;
-                optionEl.appendChild(text);
-                
-                this.sidebar.appendChild(optionEl);
+            this.sidebar.appendChild(optionEl);
+        });
+    });
+    
+    this.options.container.appendChild(this.sidebar);
+}
+
+createMainContent() {
+    if (!this.options.container) {
+        console.error('Cannot create main content: container is undefined');
+        return;
+    }
+    
+    this.mainContent = document.createElement('div');
+    this.mainContent.className = 'nl-main-content';
+    
+    const topControls = document.createElement('div');
+    topControls.className = 'nl-top-controls';
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'nl-save-btn';
+    
+    const saveIcon = document.createElement('span');
+    saveIcon.className = 'nl-save-icon';
+    saveIcon.textContent = '💾';
+    saveBtn.appendChild(saveIcon);
+    
+    const saveText = document.createElement('span');
+    saveText.textContent = 'SAVE';
+    saveBtn.appendChild(saveText);
+    
+    const dropdown = document.createElement('div');
+    dropdown.className = 'nl-dropdown';
+    
+    const dropdownText = document.createElement('span');
+    dropdownText.className = 'nl-dropdown-text';
+    dropdownText.textContent = 'Global';
+    dropdown.appendChild(dropdownText);
+    
+    const dropdownArrow = document.createElement('span');
+    dropdownArrow.className = 'nl-dropdown-arrow';
+    dropdownArrow.textContent = '>';
+    dropdown.appendChild(dropdownArrow);
+    
+    topControls.appendChild(saveBtn);
+    topControls.appendChild(dropdown);
+    this.mainContent.appendChild(topControls);
+    
+    const divider = document.createElement('div');
+    divider.className = 'nl-divider';
+    this.mainContent.appendChild(divider);
+    
+    this.sectionsContainer = document.createElement('div');
+    this.sectionsContainer.className = 'nl-sections-container';
+    this.mainContent.appendChild(this.sectionsContainer);
+    
+    this.options.container.appendChild(this.mainContent);
+}
+    
+   bindEvents() {
+    if (!this.sidebar) return;
+    
+    this.sidebar.addEventListener('click', (e) => {
+        const option = e.target.closest('.nl-sidebar-option');
+        if (option) {
+            document.querySelectorAll('.nl-sidebar-option').forEach(opt => {
+                opt.classList.remove('active');
             });
-        });
-        
-        this.options.container.appendChild(this.sidebar);
-    }
+            
+            option.classList.add('active');
+            
+            const sectionId = option.dataset.section;
+            this.showSection(sectionId);
+        }
+    });
     
-    createMainContent() {
-        this.mainContent = document.createElement('div');
-        this.mainContent.className = 'nl-main-content';
-        
-        
-        const topControls = document.createElement('div');
-        topControls.className = 'nl-top-controls';
-        
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'nl-save-btn';
-        
-        const saveIcon = document.createElement('span');
-        saveIcon.className = 'nl-save-icon';
-        saveIcon.textContent = '💾';
-        saveBtn.appendChild(saveIcon);
-        
-        const saveText = document.createElement('span');
-        saveText.textContent = 'SAVE';
-        saveBtn.appendChild(saveText);
-        
-        const dropdown = document.createElement('div');
-        dropdown.className = 'nl-dropdown';
-        
-        const dropdownText = document.createElement('span');
-        dropdownText.className = 'nl-dropdown-text';
-        dropdownText.textContent = 'Global';
-        dropdown.appendChild(dropdownText);
-        
-        const dropdownArrow = document.createElement('span');
-        dropdownArrow.className = 'nl-dropdown-arrow';
-        dropdownArrow.textContent = '>';
-        dropdown.appendChild(dropdownArrow);
-        
-        topControls.appendChild(saveBtn);
-        topControls.appendChild(dropdown);
-        this.mainContent.appendChild(topControls);
-        
-        
-        const divider = document.createElement('div');
-        divider.className = 'nl-divider';
-        this.mainContent.appendChild(divider);
-        
-        
-        this.sectionsContainer = document.createElement('div');
-        this.sectionsContainer.className = 'nl-sections-container';
-        this.mainContent.appendChild(this.sectionsContainer);
-        
-        this.options.container.appendChild(this.mainContent);
-    }
+    if (!this.mainContent) return;
     
-    bindEvents() {
-        
-        this.sidebar.addEventListener('click', (e) => {
-            const option = e.target.closest('.nl-sidebar-option');
-            if (option) {
-                
-                document.querySelectorAll('.nl-sidebar-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                
-                option.classList.add('active');
-                
-                
-                const sectionId = option.dataset.section;
-                this.showSection(sectionId);
+    this.mainContent.addEventListener('click', (e) => {
+        const toggle = e.target.closest('.nl-toggle');
+        if (toggle) {
+            toggle.classList.toggle('active');
+            
+            const funcName = toggle.dataset.func;
+            if (funcName && typeof this[funcName] === 'function') {
+                this[funcName](toggle.classList.contains('active'));
             }
-        });
-        
-        
-        this.mainContent.addEventListener('click', (e) => {
-            const toggle = e.target.closest('.nl-toggle');
-            if (toggle) {
-                toggle.classList.toggle('active');
-                
-                
-                const funcName = toggle.dataset.func;
-                if (funcName && typeof this[funcName] === 'function') {
-                    this[funcName](toggle.classList.contains('active'));
-                }
+        }
+    });
+    
+    this.mainContent.addEventListener('click', (e) => {
+        const settingsIcon = e.target.closest('.nl-settings-icon, .nl-content-settings');
+        if (settingsIcon) {
+            const funcName = settingsIcon.dataset.func;
+            if (funcName && typeof this[funcName] === 'function') {
+                this[funcName]();
             }
-        });
-        
-        
-        this.mainContent.addEventListener('click', (e) => {
-            const settingsIcon = e.target.closest('.nl-settings-icon, .nl-content-settings');
-            if (settingsIcon) {
-                const funcName = settingsIcon.dataset.func;
-                if (funcName && typeof this[funcName] === 'function') {
-                    this[funcName]();
-                }
-            }
-        });
-    }
+        }
+    });
+}
     
     showSection(sectionId) {
         
@@ -834,8 +857,26 @@ class NeverloseGUI {
     }
     
     
-    addSection(section) {
-        const sectionEl = document.createElement('div');
+addSection(section) {
+    
+    const existingIndex = this._sectionsToAdd.findIndex(s => s.id === section.id);
+    if (existingIndex !== -1) {
+        this._sectionsToAdd[existingIndex] = section;
+    } else {
+        this._sectionsToAdd.push(section);
+    }
+    
+    
+    if (this.sectionsContainer) {
+        this.renderSection(section);
+    }
+}
+
+renderSection(section) {
+    let sectionEl = document.getElementById(section.id);
+    
+    if (!sectionEl) {
+        sectionEl = document.createElement('div');
         sectionEl.className = 'nl-section';
         sectionEl.id = section.id;
         
@@ -854,10 +895,26 @@ class NeverloseGUI {
         this.sectionsContainer.appendChild(sectionEl);
         
         
-        if (this.sectionsContainer.children.length > 1) {
+        if (section.id !== this._currentSection) {
             sectionEl.classList.add('nl-hidden');
         }
+    } else {
+        sectionEl.innerHTML = '';
+        
+        if (section.title) {
+            const sectionTitle = document.createElement('div');
+            sectionTitle.className = 'nl-section-title';
+            sectionTitle.textContent = section.title;
+            sectionEl.appendChild(sectionTitle);
+        }
+        
+        section.cards.forEach(card => {
+            const cardEl = this.createCard(card);
+            sectionEl.appendChild(cardEl);
+        });
     }
+}
+
     
     createCard(card) {
         const cardEl = document.createElement('div');
