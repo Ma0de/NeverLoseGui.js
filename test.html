@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neverlose GUI.js 测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .test-info {
+            padding: 20px;
+            background-color: #1e293b;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        
+        .test-info h1 {
+            color: #3b82f6;
+            margin-top: 0;
+        }
+        
+        .test-info code {
+            background-color: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .console {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 20px auto;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .console-line {
+            margin-bottom: 5px;
+        }
+        
+        .console-time {
+            color: #94a3b8;
+        }
+        
+        .console-message {
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>Neverlose GUI.js 测试</h1>
+        <p>这是一个测试页面，用于演示 <code>GUI.js</code> 框架的功能。</p>
+        <p>请查看页面上的GUI界面和下方的控制台输出。</p>
+    </div>
+    
+    <div class="console" id="console"></div>
+
+    <script src="gui.js"></script>
+    
+    <script>
+        
+        function logToConsole(message) {
+            const consoleEl = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            
+            const time = document.createElement('span');
+            time.className = 'console-time';
+            time.textContent = new Date().toLocaleTimeString() + ' ';
+            
+            const msg = document.createElement('span');
+            msg.className = 'console-message';
+            msg.textContent = message;
+            
+            line.appendChild(time);
+            line.appendChild(msg);
+            consoleEl.appendChild(line);
+            
+            
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            
+            console.log(message);
+        }
+        
+        
+        logToConsole('正在初始化 Neverlose GUI...');
+        
+        const gui = new NeverloseGUI({
+            logo: 'NEVERLOSE',
+            categories: [
+                {
+                    name: 'Aimbot',
+                    options: [
+                        { name: 'Rage', icon: '⚙️', sectionId: 'rage-section' },
+                        { name: 'Legit', icon: '🎯', sectionId: 'legit-section' }
+                    ]
+                },
+                {
+                    name: 'Common',
+                    options: [
+                        { name: 'Visuals', icon: '👁️', sectionId: 'visuals-section' },
+                        { name: 'Misc', icon: '🔄', sectionId: 'misc-section' }
+                    ]
+                },
+                {
+                    name: 'Presets',
+                    options: [
+                        { name: 'Configs', icon: '📊', sectionId: 'configs-section' }
+                    ]
+                }
+            ]
+        });
+        
+        
+        gui.onEnableToggle = function(state) {
+            logToConsole(`Enable toggle changed to: ${state}`);
+        };
+        
+        gui.onSilentAimToggle = function(state) {
+            logToConsole(`Silent Aim toggle changed to: ${state}`);
+        };
+        
+        gui.onAimbotSettings = function() {
+            logToConsole('Aimbot settings clicked');
+        };
+        
+        gui.onVisualsSettings = function() {
+            logToConsole('Visuals settings clicked');
+        };
+        
+        gui.onTriggerbotToggle = function(state) {
+            logToConsole(`Triggerbot toggle changed to: ${state}`);
+        };
+        
+        gui.onWallhackToggle = function(state) {
+            logToConsole(`Wallhack toggle changed to: ${state}`);
+        };
+        
+        gui.onConfigSave = function() {
+            logToConsole('Config save clicked');
+        };
+        
+        
+        logToConsole('添加 Rage section...');
+        gui.addSection({
+            id: 'rage-section',
+            title: 'MAIN',
+            cards: [
+                {
+                    header: {
+                        title: 'Enable',
+                        settingsIcon: true,
+                        settingsFunc: 'onAimbotSettings',
+                        toggle: true,
+                        toggleActive: true,
+                        toggleFunc: 'onEnableToggle'
+                    },
+                    content: [
+                        {
+                            title: 'Silent Aim',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: false,
+                            toggleFunc: 'onSilentAimToggle'
+                        },
+                        {
+                            title: 'Auto Shoot',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: true
+                        },
+                        {
+                            title: 'Target Selection',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: false
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        logToConsole('添加 Legit section...');
+        gui.addSection({
+            id: 'legit-section',
+            title: 'LEGIT',
+            cards: [
+                {
+                    header: {
+                        title: 'Enable Legit',
+                        toggle: true,
+                        toggleActive: false
+                    },
+                    content: [
+                        {
+                            title: 'Triggerbot',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: true,
+                            toggleFunc: 'onTriggerbotToggle'
+                        },
+                        {
+                            title: 'Aim Assist',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: false
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        logToConsole('添加 Visuals section...');
+        gui.addSection({
+            id: 'visuals-section',
+            title: 'VISUALS',
+            cards: [
+                {
+                    header: {
+                        title: 'Enable Visuals',
+                        settingsIcon: true,
+                        settingsFunc: 'onVisualsSettings',
+                        toggle: true,
+                        toggleActive: true
+                    },
+                    content: [
+                        {
+                            title: 'Wallhack',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: true,
+                            toggleFunc: 'onWallhackToggle'
+                        },
+                        {
+                            title: 'ESP',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: false
+                        },
+                        {
+                            title: 'Chams',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: true
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        logToConsole('添加 Misc section...');
+        gui.addSection({
+            id: 'misc-section',
+            title: 'MISC',
+            cards: [
+                {
+                    header: {
+                        title: 'Miscellaneous',
+                        toggle: true,
+                        toggleActive: false
+                    },
+                    content: [
+                        {
+                            title: 'Bunny Hop',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: true
+                        },
+                        {
+                            title: 'Radar Hack',
+                            settingsIcon: true,
+                            toggle: true,
+                            toggleActive: false
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        logToConsole('添加 Configs section...');
+        gui.addSection({
+            id: 'configs-section',
+            title: 'CONFIGS',
+            cards: [
+                {
+                    header: {
+                        title: 'Configuration',
+                        settingsIcon: true,
+                        settingsFunc: 'onConfigSave'
+                    },
+                    content: [
+                        {
+                            title: 'Load Config',
+                            settingsIcon: true
+                        },
+                        {
+                            title: 'Save Config',
+                            settingsIcon: true
+                        },
+                        {
+                            title: 'Reset to Default',
+                            settingsIcon: true
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        logToConsole('Neverlose GUI 初始化完成！');
+        logToConsole('请尝试点击侧边栏选项、切换按钮和设置图标来测试功能。');
+    </script>
+</body>
+</html>
