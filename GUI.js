@@ -20,7 +20,7 @@ class NeverloseGUI {
         this.currentScale = 1;
         this.optimalScale = this.calculateOptimalScale(); 
         
-        
+        // 初始化_sectionsToAdd数组
         this._sectionsToAdd = [];
         
         window.__NeverloseGUI_Instance__ = this;
@@ -371,54 +371,43 @@ class NeverloseGUI {
 openGUI() {
     if (this.isOpen) return;
     
-    this.createOverlay();
-    this.createGUIWindow();
-    
-    this.optimalScale = this.calculateOptimalScale();
-    this.setScale(this.optimalScale);
-    
-    setTimeout(() => {
+    // 直接显示已创建的元素，而不是重新创建
+    if (this.overlay) {
         this.overlay.style.display = 'block';
+    }
+    
+    if (this.guiWindow) {
         this.guiWindow.style.display = 'block';
         
-        const guiContainer = this.guiWindow.querySelector('.nl-gui-container');
-        
-        if (this.sidebar) this.sidebar.remove();
-        if (this.mainContent) this.mainContent.remove();
-        
-        this.options.container = guiContainer;
-        this.init();
-        
-        
-        if (this._sectionsToAdd) {
-            this._sectionsToAdd.forEach(section => {
-                this.renderSection(section);
-            });
-        }
-        
-        
-        if (this._currentSection) {
-            const activeOption = this.sidebar.querySelector(`[data-section="${this._currentSection}"]`);
-            if (activeOption) {
-                activeOption.classList.add('active');
-                this.showSection(this._currentSection);
-            }
-        } else if (this.sectionsContainer.firstChild) {
+        // 只有在第一次打开时才初始化内容
+        if (!this.sidebar || !this.mainContent) {
+            const guiContainer = this.guiWindow.querySelector('.nl-gui-container');
+            this.options.container = guiContainer;
+            this.init();
             
-            const firstSection = this.sectionsContainer.firstChild;
-            const firstSectionId = firstSection.id;
-            const firstOption = this.sidebar.querySelector(`[data-section="${firstSectionId}"]`);
-            if (firstOption) {
-                firstOption.classList.add('active');
-                firstSection.classList.remove('nl-hidden');
-                this._currentSection = firstSectionId;
+            // 添加所有预加载的sections
+            if (this._sectionsToAdd) {
+                this._sectionsToAdd.forEach(section => {
+                    this.addSection(section);  // 改回使用addSection方法
+                });
+            }
+            
+            // 设置默认选中项
+            if (this.sectionsContainer && this.sectionsContainer.firstChild && !this._currentSection) {
+                const firstSection = this.sectionsContainer.firstChild;
+                const firstSectionId = firstSection.id;
+                const firstOption = this.sidebar.querySelector(`[data-section="${firstSectionId}"]`);
+                if (firstOption) {
+                    firstOption.classList.add('active');
+                    firstSection.classList.remove('nl-hidden');
+                    this._currentSection = firstSectionId;
+                }
             }
         }
-        
-        this.isOpen = true;
-    }, 10);
+    }
+    
+    this.isOpen = true;
 }
-
     
     closeGUI() {
         if (!this.isOpen) return;
@@ -858,25 +847,12 @@ createMainContent() {
     
     
 addSection(section) {
+    // 存储section配置
+    this._sectionsToAdd.push(section);
     
-    const existingIndex = this._sectionsToAdd.findIndex(s => s.id === section.id);
-    if (existingIndex !== -1) {
-        this._sectionsToAdd[existingIndex] = section;
-    } else {
-        this._sectionsToAdd.push(section);
-    }
-    
-    
+    // 如果GUI已打开，立即添加
     if (this.sectionsContainer) {
-        this.renderSection(section);
-    }
-}
-
-renderSection(section) {
-    let sectionEl = document.getElementById(section.id);
-    
-    if (!sectionEl) {
-        sectionEl = document.createElement('div');
+        const sectionEl = document.createElement('div');
         sectionEl.className = 'nl-section';
         sectionEl.id = section.id;
         
@@ -894,27 +870,11 @@ renderSection(section) {
         
         this.sectionsContainer.appendChild(sectionEl);
         
-        
-        if (section.id !== this._currentSection) {
+        if (this.sectionsContainer.children.length > 1) {
             sectionEl.classList.add('nl-hidden');
         }
-    } else {
-        sectionEl.innerHTML = '';
-        
-        if (section.title) {
-            const sectionTitle = document.createElement('div');
-            sectionTitle.className = 'nl-section-title';
-            sectionTitle.textContent = section.title;
-            sectionEl.appendChild(sectionTitle);
-        }
-        
-        section.cards.forEach(card => {
-            const cardEl = this.createCard(card);
-            sectionEl.appendChild(cardEl);
-        });
     }
 }
-
     
     createCard(card) {
         const cardEl = document.createElement('div');
